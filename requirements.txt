@@ -1,0 +1,22 @@
+# Django framework
+Django==4.2.5
+
+# PostgreSQL database adapter
+psycopg2-binary==2.9.6
+
+# Para gestionar variables de entorno (opcional pero recomendado)
+python-decouple==3.8
+
+# Herramientas para Django Admin mejorado (opcional)
+django-crispy-forms==2.0
+crispy-bootstrap5==0.7
+
+# Herramientas de depuración en desarrollo
+django-debug-toolbar==4.0
+
+# Soporte para archivos estáticos (si se necesita despliegue futuro)
+whitenoise==6.4.0
+
+# Librerías útiles para pruebas y validaciones
+pytest-django==4.5.2
+factory-boy==3.3.1
