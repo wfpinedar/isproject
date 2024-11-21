@@ -3,7 +3,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django.contrib.auth.models import User
-from .models import Profesor, Estudiante
+from .models import Profesor, Estudiante, Pregunta, Respuesta
 
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(
@@ -70,3 +70,32 @@ class EstudianteForm(forms.ModelForm):
         if commit:
             estudiante.save()
         return estudiante
+
+class PreguntaForm(forms.ModelForm):
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', 'Registrar'))
+    class Meta:
+        model = Pregunta
+        fields = ['enunciado_preg', 'tipo_preg']
+        widgets = {
+            'enunciado_preg': forms.Textarea(attrs={'placeholder': 'Escribe el enunciado aquí', 'class': 'form-control'}),
+            'tipo_preg': forms.Select(choices=[('unique', 'Respuesta Única'), ('multiple', 'Selección Múltiple'), ('true_false', 'Verdadero/Falso')], attrs={'class': 'form-control'}),
+        }
+        
+class RespuestaForm(forms.ModelForm):
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', 'Registrar'))
+    class Meta:
+        model = Respuesta
+        fields = ['enunciado_resp']
+        widgets = {
+            'enunciado_resp': forms.Textarea(attrs={'placeholder': 'Escribe el enunciado aquí', 'class': 'form-control'}),
+        }

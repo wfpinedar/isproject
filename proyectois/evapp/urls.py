@@ -12,4 +12,9 @@ urlpatterns = [
     path('home/estudiante/', views.home_estudiante, name='home_estudiante'),
     path('home/profesor/', views.home_profesor, name='home_profesor'),
     path('', views.home_generico, name='home_generico'),
+    path('preguntas/agregar/', views.agregar_pregunta, name='agregar_pregunta'),
+    path('preguntas/listar/', views.listar_preguntas, name='listar_preguntas'),
+    path('respuestas/agregar/', views.agregar_respuesta, name='agregar_respuesta'),
+    path('respuestas/listar/', views.listar_respuestas, name='listar_respuestas'),
+    path('preguntas/<int:pregunta_id>/relacionar_respuestas/', views.relacionar_respuestas, name='relacionar_respuestas'),
 ]

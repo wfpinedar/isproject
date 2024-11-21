@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Relacionar Respuestas a la Pregunta</h2>
+    <p><strong>Pregunta:</strong> {{ pregunta.enunciado_preg }}</p>
+
+    <!-- Formulario para relacionar respuestas -->
+    <form method="post">
+        {% csrf_token %}
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Seleccionar</th>
+                    <th>Respuesta</th>
+                    <th>Es Correcta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for respuesta in respuestas_con_estado %}
+                <tr>
+                    <!-- Checkbox para seleccionar la respuesta -->
+                    <td>
+                        <input type="checkbox" name="respuestas" value="{{ respuesta.id }}"
+                               {% if respuesta.relacionada %}checked{% endif %}>
+                    </td>
+                    <!-- Mostrar el enunciado de la respuesta -->
+                    <td>{{ respuesta.enunciado }}</td>
+                    <!-- Checkbox para marcar como correcta -->
+                    <td>
+                        <input type="checkbox" name="es_correcta" value="{{ respuesta.id }}"
+                               {% if respuesta.correcta %}checked{% endif %}>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary mt-3">Guardar Relaciones</button>
+    </form>
+
+    <!-- Tabla de relaciones actuales -->
+    <div class="mt-4">
+        <h3>Respuestas Relacionadas</h3>
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Respuesta</th>
+                    <th>Correcta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for respuesta in respuestas_con_estado %}
+                {% if respuesta.relacionada %}
+                <tr>
+                    <td>{{ respuesta.enunciado }}</td>
+                    <td>{{ respuesta.correcta|yesno:"Sí,No" }}</td>
+                </tr>
+                {% endif %}
+                {% empty %}
+                <tr>
+                    <td colspan="2" class="text-center">No hay respuestas relacionadas con esta pregunta.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
