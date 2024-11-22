@@ -2,9 +2,27 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
+from django.db.models import Count
 from .forms import ProfesorForm, EstudianteForm, PreguntaForm, RespuestaForm, EvaluacionForm
-from .models import Pregunta, Respuesta, Corresponde, Asocia
+from .models import Pregunta, Respuesta, Corresponde, Asocia, Asignatura, Profesor, Estudiante
 from .utils import solo_profesores
+
+
+def base_view(request):
+    user = request.user
+    is_profesor = False
+    is_estudiante = False
+
+    if user.is_authenticated:
+        is_profesor = Profesor.objects.filter(user=user).exists()
+        is_estudiante = Estudiante.objects.filter(user=user).exists()
+
+    context = {
+        'is_profesor': is_profesor,
+        'is_estudiante': is_estudiante,
+    }
+
+    return render(request, 'base.html', context)
 
 
 def registro_profesor(request):
@@ -200,3 +218,21 @@ def agregar_evaluacion(request):
     else:
         form = EvaluacionForm(profesor = profesor)
     return render(request, 'agregar_evaluacion.html', {'form': form})
+
+
+@login_required
+def listar_evaluaciones(request):
+    evaluaciones = Asocia.objects.values(
+        'id_asig', 'fecha'
+    ).annotate(numero_preguntas=Count('id_preg'))
+
+    evaluaciones_data = [
+        {
+            'asignatura': Asignatura.objects.get(id_asig=evaluacion['id_asig']).nombre_asig,
+            'fecha': evaluacion['fecha'],
+            'numero_preguntas': evaluacion['numero_preguntas'],
+        }
+        for evaluacion in evaluaciones
+    ]
+
+    return render(request, 'listar_evaluaciones.html', {'evaluaciones': evaluaciones_data})

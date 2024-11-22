@@ -5,7 +5,7 @@ from . import views
 
 urlpatterns = [
     path('login/',LoginView.as_view(template_name='login.html', authentication_form=CustomLoginForm), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'),
+    path('logout/', LogoutView.as_view(next_page='home_generico'), name='logout'),
     path('registro/profesor/', views.registro_profesor, name='registro_profesor'),
     path('registro/estudiante/', views.registro_estudiante, name='registro_estudiante'),
     path('accounts/login/', views.redireccionar_despues_de_login, name='redireccionar_login'),
@@ -20,4 +20,5 @@ urlpatterns = [
     path('preguntas/<int:pregunta_id>/editar_completo/', views.editar_pregunta_completa, name='editar_pregunta_completa'),
     path('preguntas/<int:pregunta_id>/eliminar/', views.eliminar_pregunta, name='eliminar_pregunta'),
     path('evaluaciones/agregar/', views.agregar_evaluacion, name='agregar_evaluacion'),
+    path('evaluaciones/listar/', views.listar_evaluaciones, name='listar_evaluacion'),
 ]

@@ -90,11 +90,11 @@ class PreguntaForm(forms.ModelForm):
 class EvaluacionForm(forms.Form):
     
     def __init__(self, *args, **kwargs):
+        profesor = kwargs.pop('profesor', None)
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Registrar'))
-        profesor = kwargs.pop('profesor', None)
         if profesor:
             # Filtrar asignaturas que el profesor dicta
             self.fields['asignatura'].queryset = Asignatura.objects.filter(

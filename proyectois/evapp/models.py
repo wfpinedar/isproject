@@ -17,11 +17,16 @@ class Asignatura(models.Model):
         managed = False
         db_table = 'asignatura'
 
+    def __str__(self):
+        return self.nombre_asig
 
 class Asocia(models.Model):
     id_preg = models.OneToOneField('Pregunta', models.DO_NOTHING, db_column='id_preg', primary_key=True)  # The composite primary key (id_preg, id_asig, fecha) found, that is not supported. The first column is selected.
     id_asig = models.ForeignKey(Asignatura, models.DO_NOTHING, db_column='id_asig')
     fecha = models.DateField()
+    
+    def __str__(self):
+        return f"Evaluación de la Asignatura {self.id_asig} en la fecha {self.fecha}"
 
     class Meta:
         managed = False
@@ -211,6 +216,10 @@ class Pregunta(models.Model):
     class Meta:
         managed = False
         db_table = 'pregunta'
+        
+    def __str__(self):
+        return self.enunciado_preg
+    
 
 
 class Profesor(models.Model):
