@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
-from .forms import ProfesorForm, EstudianteForm, PreguntaForm, RespuestaForm
-from .models import Pregunta, Respuesta, Corresponde
+from .forms import ProfesorForm, EstudianteForm, PreguntaForm, RespuestaForm, EvaluacionForm
+from .models import Pregunta, Respuesta, Corresponde, Asocia
 from .utils import solo_profesores
 
 
@@ -182,3 +182,21 @@ def eliminar_pregunta(request, pregunta_id):
 
     return render(request, 'confirmar_eliminacion.html', {'pregunta': pregunta})
 
+
+@solo_profesores
+@login_required
+def agregar_evaluacion(request):
+    profesor = request.user.profesor
+    if request.method == 'POST':
+        form = EvaluacionForm(request.POST, profesor = profesor)
+        if form.is_valid():
+            preguntas = form.cleaned_data['preguntas']
+            asignatura = form.cleaned_data['asignatura']
+            fecha = form.cleaned_data['fecha']
+            for pregunta in preguntas:
+                Asocia.objects.create(id_preg = pregunta, id_asig = asignatura, fecha = fecha)
+            return redirect(reverse('listar_evaluaciones'))
+                
+    else:
+        form = EvaluacionForm(profesor = profesor)
+    return render(request, 'agregar_evaluacion.html', {'form': form})
