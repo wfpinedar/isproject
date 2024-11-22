@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Editar Pregunta y Gestionar Respuestas</h2>
+
+    <!-- Formulario para editar los detalles de la pregunta -->
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="editar_pregunta" value="true">
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary mt-3">Guardar Cambios de la Pregunta</button>
+    </form>
+
+    <!-- Tabla para gestionar las respuestas relacionadas -->
+    <form method="post" class="mt-5">
+        {% csrf_token %}
+        <input type="hidden" name="guardar_respuestas" value="true">
+        <h3>Gestionar Respuestas Relacionadas</h3>
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Seleccionar</th>
+                    <th>Respuesta</th>
+                    <th>Es Correcta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for respuesta in respuestas_con_estado %}
+                <tr>
+                    <!-- Checkbox para seleccionar la respuesta -->
+                    <td>
+                        <input type="checkbox" name="respuestas" value="{{ respuesta.id }}"
+                               {% if respuesta.relacionada %}checked{% endif %}>
+                    </td>
+                    <!-- Mostrar el enunciado de la respuesta -->
+                    <td>{{ respuesta.enunciado }}</td>
+                    <!-- Checkbox para marcar como correcta -->
+                    <td>
+                        <input type="checkbox" name="es_correcta" value="{{ respuesta.id }}"
+                               {% if respuesta.correcta %}checked{% endif %}>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary mt-3">Guardar Relaciones de Respuestas</button>
+    </form>
+</div>
+{% endblock %}

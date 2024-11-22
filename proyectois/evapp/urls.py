@@ -17,4 +17,6 @@ urlpatterns = [
     path('respuestas/agregar/', views.agregar_respuesta, name='agregar_respuesta'),
     path('respuestas/listar/', views.listar_respuestas, name='listar_respuestas'),
     path('preguntas/<int:pregunta_id>/relacionar_respuestas/', views.relacionar_respuestas, name='relacionar_respuestas'),
+    path('preguntas/<int:pregunta_id>/editar_completo/', views.editar_pregunta_completa, name='editar_pregunta_completa'),
+    path('preguntas/<int:pregunta_id>/eliminar/', views.eliminar_pregunta, name='eliminar_pregunta'),
 ]

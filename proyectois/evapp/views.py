@@ -127,3 +127,58 @@ def relacionar_respuestas(request, pregunta_id):
         'respuestas_con_estado': respuestas_con_estado,
     })
 
+@login_required
+def editar_pregunta_completa(request, pregunta_id):
+    pregunta = get_object_or_404(Pregunta, id_preg=pregunta_id)
+    respuestas = Respuesta.objects.all()
+    relaciones_actuales = Corresponde.objects.filter(id_preg=pregunta)
+
+    # Crear una lista de respuestas con estado (relacionada/correcta)
+    respuestas_con_estado = []
+    for respuesta in respuestas:
+        es_relacionada = relaciones_actuales.filter(id_resp=respuesta).exists()
+        es_correcta = relaciones_actuales.filter(id_resp=respuesta, es_correcta=True).exists()
+        respuestas_con_estado.append({
+            'id': respuesta.id_resp,
+            'enunciado': respuesta.enunciado_resp,
+            'relacionada': es_relacionada,
+            'correcta': es_correcta,
+        })
+
+    if request.method == 'POST':
+        if 'editar_pregunta' in request.POST:  # Si se envió el formulario de edición
+            form = PreguntaForm(request.POST, instance=pregunta)
+            if form.is_valid():
+                form.save()
+
+        elif 'guardar_respuestas' in request.POST:  # Si se envió el formulario de respuestas
+            respuestas_seleccionadas = request.POST.getlist('respuestas')
+            respuestas_correctas = request.POST.getlist('es_correcta')
+
+            # Eliminar relaciones existentes y actualizarlas
+            Corresponde.objects.filter(id_preg=pregunta).delete()
+
+            for respuesta_id in respuestas_seleccionadas:
+                respuesta = Respuesta.objects.get(id_resp=respuesta_id)
+                es_correcta = str(respuesta_id) in respuestas_correctas
+                Corresponde.objects.create(id_preg=pregunta, id_resp=respuesta, es_correcta=es_correcta)
+
+        return redirect('listar_preguntas')
+
+    form = PreguntaForm(instance=pregunta)
+    return render(request, 'editar_pregunta_completa.html', {
+        'form': form,
+        'pregunta': pregunta,
+        'respuestas_con_estado': respuestas_con_estado,
+    })
+    
+@login_required
+def eliminar_pregunta(request, pregunta_id):
+    pregunta = get_object_or_404(Pregunta, id_preg=pregunta_id)
+
+    if request.method == 'POST':
+        pregunta.delete()
+        return redirect('listar_preguntas')  # Redirigir al listado de preguntas
+
+    return render(request, 'confirmar_eliminacion.html', {'pregunta': pregunta})
+

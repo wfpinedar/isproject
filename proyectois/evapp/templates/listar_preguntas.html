@@ -17,6 +17,10 @@
                 <td>{{ pregunta.id_preg }}</td>
                 <td>{{ pregunta.enunciado_preg }}</td>
                 <td>{{ pregunta.tipo_preg }}</td>
+                <td>
+                    <a href="{% url 'editar_pregunta_completa' pregunta.id_preg %}" class="btn btn-sm btn-warning">Editar</a>
+                    <a href="{% url 'eliminar_pregunta' pregunta.id_preg %}" class="btn btn-sm btn-danger">Eliminar</a>
+                </td>
             </tr>
             {% empty %}
             <tr>
