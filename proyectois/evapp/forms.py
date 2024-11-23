@@ -109,8 +109,8 @@ class EvaluacionForm(forms.Form):
                                     widget = forms.CheckboxSelectMultiple(), 
                                     label = "Preguntas")
     
-    fecha = forms.DateField(
-        widget = forms.DateInput(attrs = {"class" : "form-control", "type" : "date",}) , label = "Fecha Evaluación" 
+    fecha = forms.DateTimeField(
+        widget = forms.DateTimeInput(attrs = {"class" : "form-control", "type" : "datetime-local",}) , label = "Fecha y hora Evaluación" 
     )
         
 class RespuestaForm(forms.ModelForm):

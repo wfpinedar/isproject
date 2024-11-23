@@ -23,7 +23,7 @@ class Asignatura(models.Model):
 class Asocia(models.Model):
     id_preg = models.OneToOneField('Pregunta', models.DO_NOTHING, db_column='id_preg', primary_key=True)  # The composite primary key (id_preg, id_asig, fecha) found, that is not supported. The first column is selected.
     id_asig = models.ForeignKey(Asignatura, models.DO_NOTHING, db_column='id_asig')
-    fecha = models.DateField()
+    fecha = models.DateTimeField()
     
     def __str__(self):
         return f"Evaluación de la Asignatura {self.id_asig} en la fecha {self.fecha}"
@@ -187,7 +187,7 @@ class Evalua(models.Model):
     grupo = models.CharField(max_length=50)
     id_est = models.ForeignKey(Estudiante, models.DO_NOTHING, db_column='id_est')
     id_preg = models.ForeignKey('Pregunta', models.DO_NOTHING, db_column='id_preg')
-    fecha = models.DateField()
+    fecha = models.DateTimeField()
     id_salon = models.ForeignKey('Salon', models.DO_NOTHING, db_column='id_salon', blank=True, null=True)
     nota = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
 
@@ -237,7 +237,7 @@ class Responde(models.Model):
     id_asig = models.IntegerField()
     grupo = models.CharField(max_length=50)
     id_est = models.ForeignKey(Estudiante, models.DO_NOTHING, db_column='id_est')
-    fecha = models.DateField()
+    fecha = models.DateTimeField()
     id_preg = models.ForeignKey(Pregunta, models.DO_NOTHING, db_column='id_preg')
     id_resp = models.ForeignKey('Respuesta', models.DO_NOTHING, db_column='id_resp')
 
