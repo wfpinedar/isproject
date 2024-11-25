@@ -90,6 +90,7 @@ def listar_preguntas(request):
     return render(request, 'listar_preguntas.html', {'page_obj': page_obj})
 
 @login_required
+@solo_profesores
 def agregar_respuesta(request):
     if request.method == 'POST':
         form = RespuestaForm(request.POST)
@@ -102,6 +103,7 @@ def agregar_respuesta(request):
 
 
 @login_required
+@solo_profesores
 def listar_respuestas(request):
     respuestas = Respuesta.objects.all().order_by('id_resp')
     return render(request, 'listar_respuestas.html', {'respuestas': respuestas})
@@ -109,6 +111,7 @@ def listar_respuestas(request):
 
 
 @login_required
+@solo_profesores
 def relacionar_respuestas(request, pregunta_id):
     pregunta = get_object_or_404(Pregunta, id_preg=pregunta_id)
     respuestas = Respuesta.objects.all()  # Todas las respuestas disponibles
@@ -146,6 +149,7 @@ def relacionar_respuestas(request, pregunta_id):
     })
 
 @login_required
+@solo_profesores
 def editar_pregunta_completa(request, pregunta_id):
     pregunta = get_object_or_404(Pregunta, id_preg=pregunta_id)
     respuestas = Respuesta.objects.all()
@@ -191,6 +195,7 @@ def editar_pregunta_completa(request, pregunta_id):
     })
     
 @login_required
+@solo_profesores
 def eliminar_pregunta(request, pregunta_id):
     pregunta = get_object_or_404(Pregunta, id_preg=pregunta_id)
 
@@ -213,7 +218,7 @@ def agregar_evaluacion(request):
             fecha = form.cleaned_data['fecha']
             for pregunta in preguntas:
                 Asocia.objects.create(id_preg = pregunta, id_asig = asignatura, fecha = fecha)
-            return redirect(reverse('listar_evaluaciones'))
+            return redirect(reverse('listar_evaluacion'))
                 
     else:
         form = EvaluacionForm(profesor = profesor)
@@ -221,6 +226,7 @@ def agregar_evaluacion(request):
 
 
 @login_required
+@solo_profesores
 def listar_evaluaciones(request):
     evaluaciones = Asocia.objects.values(
         'id_asig', 'fecha'
