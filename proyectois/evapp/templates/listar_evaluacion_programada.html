@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Evaluaciones Programadas</h2>
+    <table class="table table-striped">
+        <thead class="table-success">
+            <tr>
+                <th>Asignatura</th>
+                <th>Grupo</th>
+                <th>Fecha</th>
+                <th>Salón</th>
+                <th>Capacidad del Salón</th>
+                <th>Número de Estudiantes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for eval in evaluaciones %}
+            <tr>
+                <td>{{ eval.id_asig__nombre_asig }}</td>
+                <td>{{ eval.grupo }}</td>
+                <td>{{ eval.fecha }}</td>
+                <td>{{ eval.id_salon__id_salon }}</td>
+                <td>{{ eval.id_salon__capacidad }}</td>
+                <td>{{ eval.num_estudiantes }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

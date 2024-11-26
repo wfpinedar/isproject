@@ -4,7 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django.contrib.auth.models import User
-from .models import Profesor, Estudiante, Pregunta, Respuesta, Asocia, Asignatura
+from .models import Profesor, Estudiante, Pregunta, Respuesta, Salon, Asignatura
 
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(
@@ -126,3 +126,41 @@ class RespuestaForm(forms.ModelForm):
         widgets = {
             'enunciado_resp': forms.Textarea(attrs={'placeholder': 'Escribe el enunciado aquí', 'class': 'form-control'}),
         }
+        
+        
+class ProgramarEvaluacionForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        profesor = kwargs.pop('profesor', None)
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', 'Programar'))
+        if profesor:
+            # Filtrar asignaturas que el profesor dicta
+            self.fields['asignatura'].queryset = Asignatura.objects.filter(
+                imparte__id_pro=profesor
+        )
+    
+    asignatura = forms.ModelChoiceField(
+        queryset=Asignatura.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-control', 'id': 'asignatura'}),
+        label="Asignatura"
+    )
+    grupo = forms.ChoiceField(
+        choices=[],
+        widget=forms.Select(attrs={'class': 'form-control', 'id': 'grupo'}),
+        label="Grupo"
+    )
+    evaluacion = forms.ChoiceField(
+        choices=[],
+        widget=forms.Select(attrs={'class': 'form-control', 'id': 'evaluacion'}),
+        label="Evaluación"
+    )
+    
+    salon = forms.ModelChoiceField(
+        queryset=Salon.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-control', 'id': 'salon'}),
+        label="Salón",
+        required=True
+    )
+    

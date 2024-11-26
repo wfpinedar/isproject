@@ -1,10 +1,12 @@
+from django.db import IntegrityError
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
-from .forms import ProfesorForm, EstudianteForm, PreguntaForm, RespuestaForm, EvaluacionForm
-from .models import Pregunta, Respuesta, Corresponde, Asocia, Asignatura, Profesor, Estudiante
+from .forms import ProfesorForm, EstudianteForm, PreguntaForm, RespuestaForm, EvaluacionForm, ProgramarEvaluacionForm
+from .models import Pregunta, Respuesta, Corresponde, Asocia, Asignatura, Profesor, Estudiante, Evalua, Cursa, Imparte, Salon
 from .utils import solo_profesores
 
 
@@ -242,3 +244,140 @@ def listar_evaluaciones(request):
     ]
 
     return render(request, 'listar_evaluaciones.html', {'evaluaciones': evaluaciones_data})
+
+@login_required
+@solo_profesores
+def programar_evaluacion(request):
+    profesor = request.user.profesor  # Relación entre el usuario y el modelo Profesor
+    if request.method == 'POST':
+        form = ProgramarEvaluacionForm(request.POST, profesor=profesor)
+
+        # Obtener la asignatura seleccionada
+        asignatura_id = request.POST.get('asignatura')
+        if asignatura_id:
+            # Actualizar las opciones de grupo
+            grupos = (
+                Cursa.objects.filter(id_asig=asignatura_id)
+                .values_list('grupo', 'grupo')
+                .distinct()
+            )
+            form.fields['grupo'].choices = grupos
+
+            # Actualizar las opciones de evaluación
+            evaluaciones = (
+                Asocia.objects.filter(id_asig=asignatura_id)
+                .values('id_asig_id', 'fecha')
+                .distinct()
+            )
+            form.fields['evaluacion'].choices = [
+                (f"{evaluacion['id_asig_id']}|{evaluacion['fecha']}", f"Evaluación - {evaluacion['fecha'].strftime('%Y-%m-%d')}")
+                for evaluacion in evaluaciones
+            ]
+
+        # Validar el formulario
+        if form.is_valid():
+            asignatura = form.cleaned_data['asignatura']
+            grupo = form.cleaned_data['grupo']
+            evaluacion = form.cleaned_data['evaluacion']
+            salon = form.cleaned_data['salon']
+
+            # Descomponer la clave compuesta (id_asig|fecha)
+            id_asig, fecha = evaluacion.split('|')
+
+            # Obtener la instancia de Imparte
+            imparte = Imparte.objects.filter(id_pro=profesor, id_asig=id_asig, grupo=grupo).first()
+            if not imparte:
+                return JsonResponse({'error': 'No se encontró relación entre profesor, asignatura y grupo.'}, status=400)
+
+            # Obtener estudiantes del grupo seleccionado
+            estudiantes = Estudiante.objects.filter(cursa__id_asig=id_asig, cursa__grupo=grupo)
+
+            # Obtener las preguntas de la evaluación seleccionada
+            preguntas = Pregunta.objects.filter(id_preg__in=Asocia.objects.filter(id_asig=id_asig, fecha=fecha).values_list('id_preg', flat=True))
+
+
+            # Crear relaciones en Evalua
+            for estudiante in estudiantes:
+                for pregunta in preguntas:
+                    # Verificar si ya existe
+                    if not Evalua.objects.filter(
+                        id_pro=imparte,
+                        id_asig=id_asig,
+                        grupo=grupo,
+                        id_est=estudiante,
+                        id_preg=pregunta,
+                        fecha=fecha,
+                        id_salon=salon
+                    ).exists():
+                        # Crear solo si no existe
+                        # try:
+                        Evalua.objects.create(
+                            id_pro=imparte,
+                            id_asig=id_asig,
+                            grupo=grupo,
+                            id_est=estudiante,
+                            id_preg=pregunta,
+                            fecha=fecha,
+                            id_salon=salon
+                        )
+                        # except IntegrityError:
+                        #     print("Ha ocurrido un error de integridad en los datos")
+                        #     pass
+
+            return redirect('listar_evaluacion')
+
+    else:
+        form = ProgramarEvaluacionForm()
+        # Filtrar asignaturas que el profesor dicta
+        form.fields['asignatura'].queryset = Asignatura.objects.filter(imparte__id_pro=profesor)
+
+    return render(request, 'programar_evaluacion.html', {'form': form})
+
+@login_required
+def obtener_datos_dinamicos(request):
+    asignatura_id = request.GET.get('asignatura_id')  # Obtenemos el ID de la asignatura seleccionada
+
+    if not asignatura_id:
+        return JsonResponse({'error': 'No se proporcionó asignatura_id'}, status=400)
+
+    # Obtener grupos asociados a la asignatura
+    grupos = (
+        Cursa.objects.filter(id_asig=asignatura_id)
+        .values_list('grupo', flat=True)
+        .distinct()
+    )
+    print(grupos)
+    # Obtener evaluaciones asociadas a la asignatura
+    evaluaciones = (
+        Asocia.objects.filter(id_asig=asignatura_id)
+        .values('id_asig_id', 'fecha')
+        .distinct()
+    )
+
+    # Crear una representación única para cada evaluación
+    evaluaciones_formateadas = [
+        {
+            'id': f"{evaluacion['id_asig_id']}|{evaluacion['fecha']}",
+            'texto': f"Evaluación - {evaluacion['fecha'].strftime('%Y-%m-%d')}"
+        }
+        for evaluacion in evaluaciones
+    ]
+    print(evaluaciones_formateadas)
+    return JsonResponse({
+        'grupos': list(grupos),
+        'evaluaciones': list(evaluaciones_formateadas),
+    })
+    
+@login_required
+@solo_profesores
+def listar_evaluacion_programada(request):
+    profesor = request.user.profesor  # Relación entre usuario y profesor
+
+    evaluaciones = (
+        Evalua.objects.filter(id_pro__id_pro=profesor.id_pro)  # Filtrar evaluaciones del profesor logueado
+        .values('id_asig__nombre_asig', 'grupo', 'fecha', 'id_salon__id_salon', 'id_salon__capacidad')
+        .annotate(num_estudiantes=Count('id_est', distinct=True))
+        .order_by('fecha')  # Ordenar por fecha
+    )
+
+    return render(request, 'listar_evaluacion_programada.html', {'evaluaciones': evaluaciones})

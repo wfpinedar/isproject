@@ -21,4 +21,7 @@ urlpatterns = [
     path('preguntas/<int:pregunta_id>/eliminar/', views.eliminar_pregunta, name='eliminar_pregunta'),
     path('evaluaciones/agregar/', views.agregar_evaluacion, name='agregar_evaluacion'),
     path('evaluaciones/listar/', views.listar_evaluaciones, name='listar_evaluacion'),
+    path('evaluaciones/programar/', views.programar_evaluacion, name='programar_evaluacion'),
+    path('evalua/obtener_datos_dinamicos/', views.obtener_datos_dinamicos, name='obtener_datos_dinamicos'),
+    path('evaluaciones/programadas/', views.listar_evaluacion_programada, name='listar_evaluacion_programada'),
 ]

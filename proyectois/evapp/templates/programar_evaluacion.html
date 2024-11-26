@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Programar Evaluación</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary mt-3">Asignar Evaluación</button>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Detectar cambio en la asignatura
+        $('#asignatura').change(function() {
+            const asignaturaId = $(this).val();
+            console.log(asignaturaId);
+            // Vaciar los campos de grupo y evaluación
+            $('#grupo').empty();
+            $('#evaluacion').empty();
+
+            if (asignaturaId) {
+                // Realizar solicitud AJAX para obtener los datos dinámicos
+                $.ajax({
+                    url: "{% url 'obtener_datos_dinamicos' %}",
+                    data: {
+                        'asignatura_id': asignaturaId
+                    },
+                    success: function(data) {
+                        // Poblar los grupos
+                        if (data.grupos.length > 0) {
+                            $('#grupo').append('<option value="">Seleccione un grupo</option>');
+                            data.grupos.forEach(function(grupo) {
+                                $('#grupo').append('<option value="' + grupo + '">' + grupo + '</option>');
+                            });
+                        } else {
+                            $('#grupo').append('<option value="">No hay grupos disponibles</option>');
+                        }
+
+                        // Poblar las evaluaciones
+                        if (data.evaluaciones.length > 0) {
+                            $('#evaluacion').append('<option value="">Seleccione una evaluación</option>');
+                            data.evaluaciones.forEach(function(evaluacion) {
+                                $('#evaluacion').append('<option value="' + evaluacion.id + '">' + evaluacion.texto + '</option>');
+                            });
+                        } else {
+                            $('#evaluacion').append('<option value="">No hay evaluaciones disponibles</option>');
+                        }
+                    },
+                    error: function() {
+                        alert('Ocurrió un error al obtener los datos dinámicos.');
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

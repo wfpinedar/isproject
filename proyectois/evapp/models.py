@@ -182,8 +182,8 @@ class Estudiante(models.Model):
 
 
 class Evalua(models.Model):
-    id_pro = models.OneToOneField('Imparte', models.DO_NOTHING, db_column='id_pro', primary_key=True)  # The composite primary key (id_pro, id_asig, grupo, id_est, id_preg, fecha) found, that is not supported. The first column is selected.
-    id_asig = models.IntegerField()
+    id_pro = models.OneToOneField('Imparte', models.DO_NOTHING, db_column='id_pro', primary_key=True) 
+    id_asig = models.ForeignKey(Asignatura, on_delete=models.CASCADE, db_column='id_asig')
     grupo = models.CharField(max_length=50)
     id_est = models.ForeignKey(Estudiante, models.DO_NOTHING, db_column='id_est')
     id_preg = models.ForeignKey('Pregunta', models.DO_NOTHING, db_column='id_preg')
@@ -194,11 +194,11 @@ class Evalua(models.Model):
     class Meta:
         managed = False
         db_table = 'evalua'
-        unique_together = (('id_pro', 'id_asig', 'grupo', 'id_est', 'id_preg', 'fecha'), ('id_pro', 'id_asig', 'grupo', 'fecha'),)
+        unique_together = (('id_pro', 'id_asig', 'grupo', 'id_est', 'id_preg', 'fecha'),)
 
 
 class Imparte(models.Model):
-    id_pro = models.OneToOneField('Profesor', models.DO_NOTHING, db_column='id_pro', primary_key=True)  # The composite primary key (id_pro, id_asig, grupo) found, that is not supported. The first column is selected.
+    id_pro = models.OneToOneField('Profesor', models.DO_NOTHING, db_column='id_pro', primary_key=True)
     id_asig = models.ForeignKey(Asignatura, models.DO_NOTHING, db_column='id_asig')
     grupo = models.CharField(max_length=50)
 
@@ -233,7 +233,7 @@ class Profesor(models.Model):
 
 
 class Responde(models.Model):
-    id_pro = models.OneToOneField(Imparte, models.DO_NOTHING, db_column='id_pro', primary_key=True)  # The composite primary key (id_pro, id_asig, grupo, id_est, fecha, id_preg) found, that is not supported. The first column is selected.
+    id_pro = models.OneToOneField(Imparte, models.DO_NOTHING, db_column='id_pro', primary_key=True)
     id_asig = models.IntegerField()
     grupo = models.CharField(max_length=50)
     id_est = models.ForeignKey(Estudiante, models.DO_NOTHING, db_column='id_est')
@@ -263,3 +263,7 @@ class Salon(models.Model):
     class Meta:
         managed = False
         db_table = 'salon'
+        
+    def __str__(self):
+        return str(self.id_salon)
+
