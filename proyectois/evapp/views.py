@@ -381,3 +381,25 @@ def listar_evaluacion_programada(request):
     )
 
     return render(request, 'listar_evaluacion_programada.html', {'evaluaciones': evaluaciones})
+
+
+@login_required
+def listar_evaluaciones_estudiante(request):
+    estudiante = request.user.estudiante
+    evaluaciones = (
+        Evalua.objects.filter(id_est=estudiante)
+        .values('id_asig__nombre_asig', 'grupo', 'fecha', 'id_salon__id_salon', 'id_salon__capacidad')
+        .distinct()
+        .order_by('fecha')
+    )
+
+    return render(request, 'listar_evaluaciones_estudiante.html', {'evaluaciones': evaluaciones})
+
+@login_required
+def presentar_evaluacion(request, asignatura, fecha, grupo):
+    # Esta vista manejará la lógica para presentar el evaluacion
+    return render(request, 'presentar_evaluacion.html', {
+        'asignatura': asignatura,
+        'fecha': fecha,
+        'grupo': grupo,
+    })
