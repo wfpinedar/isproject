@@ -21,8 +21,8 @@ class Asignatura(models.Model):
         return self.nombre_asig
 
 class Asocia(models.Model):
-    id_preg = models.OneToOneField('Pregunta', models.DO_NOTHING, db_column='id_preg', primary_key=True)  # The composite primary key (id_preg, id_asig, fecha) found, that is not supported. The first column is selected.
-    id_asig = models.ForeignKey(Asignatura, models.DO_NOTHING, db_column='id_asig')
+    id_preg = models.ForeignKey('Pregunta', models.CASCADE, db_column='id_preg')  # The composite primary key (id_preg, id_asig, fecha) found, that is not supported. The first column is selected.
+    id_asig = models.ForeignKey(Asignatura, models.CASCADE, db_column='id_asig')
     fecha = models.DateTimeField()
     
     def __str__(self):
@@ -180,23 +180,6 @@ class Estudiante(models.Model):
         managed = True
         db_table = 'estudiante'
 
-
-class Evalua(models.Model):
-    id_pro = models.OneToOneField('Imparte', models.DO_NOTHING, db_column='id_pro', primary_key=True) 
-    id_asig = models.ForeignKey(Asignatura, on_delete=models.CASCADE, db_column='id_asig')
-    grupo = models.CharField(max_length=50)
-    id_est = models.ForeignKey(Estudiante, models.DO_NOTHING, db_column='id_est')
-    id_preg = models.ForeignKey('Pregunta', models.DO_NOTHING, db_column='id_preg')
-    fecha = models.DateTimeField()
-    id_salon = models.ForeignKey('Salon', models.DO_NOTHING, db_column='id_salon', blank=True, null=True)
-    nota = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'evalua'
-        unique_together = (('id_pro', 'id_asig', 'grupo', 'id_est', 'id_preg', 'fecha'),)
-
-
 class Imparte(models.Model):
     id_pro = models.OneToOneField('Profesor', models.DO_NOTHING, db_column='id_pro', primary_key=True)
     id_asig = models.ForeignKey(Asignatura, models.DO_NOTHING, db_column='id_asig')
@@ -220,42 +203,6 @@ class Pregunta(models.Model):
     def __str__(self):
         return self.enunciado_preg
     
-
-
-class Profesor(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
-    id_pro = models.AutoField(primary_key=True)
-    nombre_pro = models.CharField(max_length=255)
-
-    class Meta:
-        managed = True
-        db_table = 'profesor'
-
-
-class Responde(models.Model):
-    id_pro = models.OneToOneField(Imparte, models.DO_NOTHING, db_column='id_pro', primary_key=True)
-    id_asig = models.IntegerField()
-    grupo = models.CharField(max_length=50)
-    id_est = models.ForeignKey(Estudiante, models.DO_NOTHING, db_column='id_est')
-    fecha = models.DateTimeField()
-    id_preg = models.ForeignKey(Pregunta, models.DO_NOTHING, db_column='id_preg')
-    id_resp = models.ForeignKey('Respuesta', models.DO_NOTHING, db_column='id_resp')
-
-    class Meta:
-        managed = False
-        db_table = 'responde'
-        unique_together = (('id_pro', 'id_asig', 'grupo', 'id_est', 'fecha', 'id_preg'),)
-
-
-class Respuesta(models.Model):
-    id_resp = models.AutoField(primary_key=True)
-    enunciado_resp = models.TextField()
-
-    class Meta:
-        managed = False
-        db_table = 'respuesta'
-
-
 class Salon(models.Model):
     id_salon = models.AutoField(primary_key=True)
     capacidad = models.IntegerField()
@@ -267,3 +214,54 @@ class Salon(models.Model):
     def __str__(self):
         return str(self.id_salon)
 
+class Evalua(models.Model):
+    id_pro = models.ForeignKey(Imparte, on_delete=models.CASCADE, db_column='id_pro')
+    id_asig = models.ForeignKey(Asignatura, on_delete=models.CASCADE, db_column='id_asig')
+    grupo = models.CharField(max_length=50)
+    id_est = models.ForeignKey(Estudiante, models.CASCADE, db_column='id_est')
+    id_preg = models.ForeignKey(Pregunta, models.CASCADE, db_column='id_preg')
+    fecha = models.DateTimeField()
+    id_salon = models.ForeignKey(Salon, models.CASCADE, db_column='id_salon', blank=True, null=True)
+    nota = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'evalua'
+        unique_together = (('id_pro', 'id_asig', 'grupo', 'id_est', 'id_preg', 'fecha'),)
+
+
+class Profesor(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    id_pro = models.AutoField(primary_key=True)
+    nombre_pro = models.CharField(max_length=255)
+
+    class Meta:
+        managed = True
+        db_table = 'profesor'
+
+class Respuesta(models.Model):
+    id_resp = models.AutoField(primary_key=True)
+    enunciado_resp = models.TextField()
+
+    class Meta:
+        managed = False
+        db_table = 'respuesta'
+        
+    def __str__(self):
+        return self.enunciado_resp
+
+
+class Responde(models.Model):
+    id_pro = models.ForeignKey(Imparte, on_delete=models.CASCADE, db_column='id_pro')
+    id_asig = models.ForeignKey(Asignatura, on_delete=models.CASCADE, db_column='id_asig')
+    grupo = models.CharField(max_length=50)
+    id_est = models.ForeignKey(Estudiante, on_delete=models.CASCADE, db_column='id_est')
+    fecha = models.DateField()
+    id_preg = models.ForeignKey(Pregunta, on_delete=models.CASCADE, db_column='id_preg')
+    id_resp = models.ForeignKey(Respuesta, on_delete=models.CASCADE, db_column='id_resp')
+    
+
+    class Meta:
+        managed = False
+        db_table = 'responde'
+        unique_together = (('id_pro', 'id_asig', 'grupo', 'id_est', 'fecha', 'id_preg', 'id_resp'),)

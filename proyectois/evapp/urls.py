@@ -25,5 +25,6 @@ urlpatterns = [
     path('evalua/obtener_datos_dinamicos/', views.obtener_datos_dinamicos, name='obtener_datos_dinamicos'),
     path('evaluaciones/programadas/', views.listar_evaluacion_programada, name='listar_evaluacion_programada'),
     path('evaluaciones/estudiante/', views.listar_evaluaciones_estudiante, name='listar_evaluaciones_estudiante'),
-    path('evaluaciones/presentar/<str:asignatura>/<str:fecha>/<str:grupo>/',views.presentar_evaluacion,name='presentar_evaluacion'  ),
+    path('evaluaciones/presentar/<str:asignatura>/<str:fecha>/<str:grupo>/',views.presentar_evaluacion,name='presentar_evaluacion'),
+    path('evaluaciones/responder/<str:asignatura>/<str:fecha>/<str:grupo>/',views.responder_evaluacion,name='responder_evaluacion'),
 ]

@@ -1,13 +1,17 @@
 from django.db import IntegrityError
 from django.http import JsonResponse
+from datetime import datetime
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
-from django.db.models import Count
-from .forms import ProfesorForm, EstudianteForm, PreguntaForm, RespuestaForm, EvaluacionForm, ProgramarEvaluacionForm
-from .models import Pregunta, Respuesta, Corresponde, Asocia, Asignatura, Profesor, Estudiante, Evalua, Cursa, Imparte, Salon
-from .utils import solo_profesores
+from django.db.models import Count, Avg
+from django.db.models.functions import TruncDate
+from django.utils.timezone import now
+from collections import defaultdict
+from .forms import ProfesorForm, EstudianteForm, PreguntaForm, RespuestaForm, EvaluacionForm, ProgramarEvaluacionForm, ResponderEvaluacionForm
+from .models import Pregunta, Respuesta, Corresponde, Asocia, Asignatura, Profesor, Estudiante, Evalua, Cursa, Imparte, Salon, Responde
+from .utils import solo_profesores, insertar_respuesta_manual
 
 
 def base_view(request):
@@ -395,11 +399,223 @@ def listar_evaluaciones_estudiante(request):
 
     return render(request, 'listar_evaluaciones_estudiante.html', {'evaluaciones': evaluaciones})
 
+from django.contrib import messages
 @login_required
 def presentar_evaluacion(request, asignatura, fecha, grupo):
-    # Esta vista manejará la lógica para presentar el evaluacion
-    return render(request, 'presentar_evaluacion.html', {
-        'asignatura': asignatura,
-        'fecha': fecha,
-        'grupo': grupo,
-    })
+    # Obtener la asignatura
+    asignatura_obj = get_object_or_404(Asignatura, nombre_asig=asignatura)
+
+    # Obtener al estudiante actual
+    estudiante = request.user.estudiante
+
+    # Convertir la fecha a un objeto datetime
+    try:
+        fecha_obj = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        messages.error(request, "Fecha inválida.")
+        return redirect('evaluaciones')  # Redirigir a una página de evaluaciones, si existe.
+
+    # Verificar si el estudiante ya respondió alguna pregunta de esta evaluación
+    evaluacion_respondida = Responde.objects.filter(
+        id_asig=asignatura_obj,
+        grupo=grupo,
+        id_est=estudiante,
+        # fecha=fecha_obj.date()
+    ).exists()
+
+    if evaluacion_respondida:
+        evaluacion = Evalua.objects.filter(
+            id_est__id_est=estudiante.id_est,
+            id_asig__id_asig=asignatura_obj.id_asig,
+            grupo=grupo,
+            fecha=fecha_obj) \
+        .values('nota') \
+        .annotate(num_estudiantes=Count('nota', distinct=True)) \
+        .order_by('nota').first()
+        nota = evaluacion['nota']
+        messages.info(request, "Ya has presentado esta evaluación.")
+        return render(request, 'presentar_evaluacion.html', {
+            'asignatura': asignatura,
+            'fecha': fecha,
+            'grupo': grupo,
+            'nota': nota
+        })
+    else:
+        # Si no ha sido respondida, redirigir a la URL de responder_evaluacion
+        return redirect('responder_evaluacion', asignatura=asignatura, fecha=fecha, grupo=grupo)
+    
+
+
+@login_required
+def responder_evaluacion(request, asignatura, grupo, fecha):
+    asignatura_id = Asignatura.objects.get(nombre_asig=asignatura).id_asig
+    estudiante = request.user.estudiante
+
+    # Convertir fecha de la URL a un objeto datetime
+    fecha_obj = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
+
+    # Verificar que el estudiante está inscrito en el grupo y asignatura
+    imparte = Imparte.objects.filter(id_asig=asignatura_id, grupo=grupo).first()
+    if not imparte:
+        return render(request, 'error.html', {'mensaje': 'No estás inscrito en esta asignatura y grupo.'})
+
+    preguntas = Pregunta.objects.filter(evalua__id_asig=asignatura_id, evalua__grupo=grupo, evalua__fecha=fecha, evalua__id_est=estudiante)
+    if request.method == 'POST':
+        form = ResponderEvaluacionForm(request.POST, preguntas=preguntas)
+        if form.is_valid():
+            for pregunta in preguntas:
+                field_name = f'pregunta_{pregunta.id_preg}'
+                try:
+                    if pregunta.tipo_preg == 'unique':
+                        respuesta = form.cleaned_data[field_name]
+                        Responde.objects.create(
+                            id_pro=imparte,
+                            id_asig_id=asignatura_id,
+                            grupo=grupo,
+                            id_est=estudiante,
+                            fecha=fecha_obj,
+                            id_preg=pregunta,
+                            id_resp=respuesta
+                        )
+                    elif pregunta.tipo_preg == 'multiple':
+                        respuestas = form.cleaned_data[field_name]
+                        for respuesta in respuestas:
+                            if not Responde.objects.filter(
+                                id_pro=imparte,
+                                id_asig_id=asignatura_id,
+                                grupo=grupo,
+                                id_est=estudiante,
+                                fecha=fecha_obj,
+                                id_preg=pregunta,
+                                id_resp=respuesta
+                            ).exists():
+                                Responde.objects.create(
+                                    id_pro=imparte,
+                                    id_asig_id=asignatura_id,
+                                    grupo=grupo,
+                                    id_est=estudiante,
+                                    fecha=fecha_obj,
+                                    id_preg=pregunta,
+                                    id_resp=respuesta
+                                )
+                    elif pregunta.tipo_preg == 'true_false':
+                        respuesta_vf = form.cleaned_data[field_name]
+                        Responde.objects.create(
+                            id_pro=imparte,
+                            id_asig_id=asignatura_id,
+                            grupo=grupo,
+                            id_est=estudiante,
+                            fecha=fecha_obj,
+                            id_preg=pregunta,
+                            id_resp=respuesta_vf
+                        )
+                except Exception as e:
+                    # Llamar a la función de inserción manual en caso de error
+                    print(f"Error al insertar en Responde: {e}")
+                    if pregunta.tipo_preg == 'unique':
+                        respuesta = form.cleaned_data[field_name]
+                        insertar_respuesta_manual(
+                        id_pro=imparte.id_pro,
+                        id_asig=asignatura_id,
+                        grupo=grupo,
+                        id_est=estudiante.id_est,
+                        fecha=fecha_obj,
+                        id_preg=pregunta.id_preg,
+                        id_resp=respuesta.id_resp
+                    )
+                    elif pregunta.tipo_preg == 'multiple':
+                        respuestas = form.cleaned_data[field_name]
+                        for respuesta in respuestas:
+                            insertar_respuesta_manual(
+                            id_pro=imparte.id_pro,
+                            id_asig=asignatura_id,
+                            grupo=grupo,
+                            id_est=estudiante.id_est,
+                            fecha=fecha_obj,
+                            id_preg=pregunta.id_preg,
+                            id_resp=respuesta.id_resp
+                        )
+                    elif pregunta.tipo_preg == 'true_false':
+                        respuesta_vf = form.cleaned_data[field_name]
+                        insertar_respuesta_manual(
+                        id_pro=imparte.id_pro,
+                        id_asig=asignatura_id,
+                        grupo=grupo,
+                        id_est=estudiante.id_est,
+                        fecha=fecha_obj,
+                        id_preg=pregunta.id_preg,
+                        id_resp=respuesta_vf   .id_resp
+                    )
+                    
+                    # Calcular nota
+            respuestas_correctas = 0
+            total_preguntas = 0
+
+            # Obtener todas las preguntas respondidas en esta evaluación
+            preguntas = Pregunta.objects.annotate(fecha_truncada=TruncDate('evalua__fecha')).filter(
+                evalua__id_asig=asignatura_id,
+                evalua__grupo=grupo,
+                fecha_truncada=fecha_obj,
+                evalua__id_est=estudiante
+            ).distinct()
+
+            for pregunta in preguntas:
+                # Incrementar el contador de preguntas
+                total_preguntas += 1
+
+                # Verificar si la respuesta es correcta
+                respuestas_estudiante = Responde.objects.annotate(fecha_truncada=TruncDate('fecha')).filter(
+                    id_pro__id_asig=asignatura_id,
+                    id_est=estudiante,
+                    fecha_truncada=fecha_obj,
+                    id_preg=pregunta
+                ).values_list('id_resp', flat=True)
+
+                respuestas_correctas_db = Corresponde.objects.filter(
+                    id_preg=pregunta,
+                    es_correcta=True
+                ).values_list('id_resp', flat=True)
+
+                # Comprobar si todas las respuestas del estudiante coinciden con las correctas
+                if set(respuestas_estudiante) == set(respuestas_correctas_db):
+                    respuestas_correctas += 1
+                
+            # Calcular nota como porcentaje
+            if total_preguntas > 0:
+                nota = (respuestas_correctas / total_preguntas) * 5
+            else:
+                nota = 0
+            # **Actualizar el campo nota en Evalua**
+            # Evalua.objects.annotate(fecha_truncada=TruncDate('fecha')).filter(
+            #     id_asig=asignatura_id,
+            #     grupo=grupo,
+            #     id_est=estudiante,
+            #     fecha_truncada=fecha_obj
+            # ).update(nota=nota)
+            
+            if Evalua.objects.annotate(fecha_truncada=TruncDate('fecha')).filter(
+                id_asig=asignatura_id,
+                grupo=grupo,
+                id_est=estudiante,
+                fecha_truncada=fecha_obj
+            ).exists():
+                # Validar el valor de la nota antes de actualizar
+                if nota < 0 or nota > 5.0:
+                    raise ValueError(f"El valor de la nota ({nota}) está fuera del rango permitido (0-5).")
+
+                try:
+                    # Actualizar solo si la nota está dentro del rango permitido
+                    Evalua.objects.annotate(fecha_truncada=TruncDate('fecha')).filter(
+                        id_asig=asignatura_id,
+                        grupo=grupo,
+                        id_est=estudiante,
+                        fecha_truncada=fecha_obj
+                    ).update(nota=nota)
+                except IntegrityError as e:
+                    print(f"Error de integridad al actualizar la nota: {e}")
+            return render(request, 'confirmacion.html', {'mensaje': 'Respuestas enviadas con éxito.', 'nota': nota})
+    else:
+        form = ResponderEvaluacionForm(preguntas=preguntas)
+
+    return render(request, 'responder_evaluacion.html', {'form': form})
+

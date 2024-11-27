@@ -1,11 +1,14 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2>Presentar evaluacion</h2>
-    <p><strong>Asignatura:</strong> {{ asignatura }}</p>
-    <p><strong>Fecha:</strong> {{ fecha }}</p>
-    <p><strong>Grupo:</strong> {{ grupo }}</p>
-    <p>La funcionalidad para presentar el evaluacion estará disponible próximamente.</p>
-</div>
+<h2>Evaluación Ya Presentada</h2>
+<p>La evaluación de {{ asignatura }} programada para la fecha {{ fecha }} en el grupo {{ grupo }} ya fue presentada.</p>
+
+{% if nota is not None %}
+    <p>Tu nota obtenida es: <strong>{{ nota }}</strong></p>
+{% else %}
+    <p>La nota aún no ha sido registrada.</p>
+{% endif %}
+
+<a href="{% url 'listar_evaluaciones_estudiante' %}">Volver a Evaluaciones</a>
 {% endblock %}

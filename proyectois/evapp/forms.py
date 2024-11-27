@@ -4,7 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django.contrib.auth.models import User
-from .models import Profesor, Estudiante, Pregunta, Respuesta, Salon, Asignatura
+from .models import Profesor, Estudiante, Pregunta, Respuesta, Salon, Asignatura, Corresponde
 
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(
@@ -163,4 +163,37 @@ class ProgramarEvaluacionForm(forms.Form):
         label="Salón",
         required=True
     )
+
+class ResponderEvaluacionForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        preguntas = kwargs.pop('preguntas', [])
+        super().__init__(*args, **kwargs)
+
+        for pregunta in preguntas:
+            # Obtener respuestas relacionadas a través de Corresponde
+            respuestas = Respuesta.objects.filter(
+                id_resp__in=Corresponde.objects.filter(id_preg=pregunta).values_list('id_resp', flat=True)
+            )
+
+            if pregunta.tipo_preg == 'unique':
+                self.fields[f'pregunta_{pregunta.id_preg}'] = forms.ModelChoiceField(
+                    queryset=respuestas,
+                    widget=forms.RadioSelect,
+                    label=pregunta.enunciado_preg,
+                    required=True
+                )
+            elif pregunta.tipo_preg == 'multiple':
+                self.fields[f'pregunta_{pregunta.id_preg}'] = forms.ModelMultipleChoiceField(
+                    queryset=respuestas,
+                    widget=forms.CheckboxSelectMultiple,
+                    label=pregunta.enunciado_preg,
+                    required=False
+                )
+            elif pregunta.tipo_preg == 'true_false':
+                self.fields[f'pregunta_{pregunta.id_preg}'] = forms.ModelChoiceField(
+                    queryset=respuestas,
+                    widget=forms.RadioSelect,
+                    label=pregunta.enunciado_preg,
+                    required=True
+                )
     
