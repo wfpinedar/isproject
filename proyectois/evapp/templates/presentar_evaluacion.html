@@ -10,5 +10,13 @@
     <p>La nota aún no ha sido registrada.</p>
 {% endif %}
 
+<br>
+<a href="{% url 'detalle_evaluacion' estudiante_id=request.user.estudiante.id_est asignatura=asignatura grupo=grupo fecha=fecha %}" 
+class="btn btn-info">
+ Ver Detalle
+</a>
+</br>
+<br>
 <a href="{% url 'listar_evaluaciones_estudiante' %}">Volver a Evaluaciones</a>
+</br>
 {% endblock %}

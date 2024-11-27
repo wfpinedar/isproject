@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Consolidado de la Evaluación</h2>
+<p><strong>Asignatura:</strong> {{ asignatura }}</p>
+<p><strong>Fecha:</strong> {{ fecha }}</p>
+<p><strong>Grupo:</strong> {{ grupo }}</p>
+
+<table class="table table-striped">
+    <thead class="table-success">
+        <tr>
+            <th>Pregunta</th>
+            <th>Respuesta</th>
+            <th>Correcta</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in consolidado %}
+        <tr>
+            <td>{{ item.pregunta }}</td>
+            <td>{{ item.respuesta }}</td>
+            <td>{{ item.correcta }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p><strong>Nota Final:</strong> {{ nota }}</p>
+
+<a href="{% url 'consultar_resultados' asignatura=asignatura grupo=grupo %}">Volver</a>
+{% endblock %}

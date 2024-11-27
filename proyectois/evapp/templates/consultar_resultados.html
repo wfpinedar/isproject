@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Resultados de la Asignatura: {{ asignatura }}</h2>
+<p>Grupo: {{ grupo }}</p>
+
+<table class="table table-striped">
+    <thead class="table-success">
+        <tr>
+            <th>Estudiante</th>
+            <th>Nota Promedio</th>
+            <th>Accion</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for resultado in resultados %}
+        <tr>
+            {% comment %} <td>{{ resultado.id_est__id_est }}</td> {% endcomment %}
+            <td>{{ resultado.id_est__nombre_est }}</td>
+            <td>{{ resultado.promedio_nota|floatformat:2 }}</td>
+            <td>
+                <a href="{% url 'detalle_evaluacion' estudiante_id=resultado.id_est__id_est asignatura=asignatura grupo=grupo fecha=resultado.fecha %}" class="btn btn-success">Ver Detalle</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{% url 'home_profesor' %}">Volver</a>
+{% endblock %}

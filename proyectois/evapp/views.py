@@ -619,3 +619,110 @@ def responder_evaluacion(request, asignatura, grupo, fecha):
 
     return render(request, 'responder_evaluacion.html', {'form': form})
 
+
+@login_required
+@solo_profesores
+def consultar_resultados(request, asignatura, grupo):
+    # Obtener el profesor actual
+    profesor = request.user.profesor
+
+    # Validar que el profesor dicta esta asignatura en el grupo especificado
+    imparte = get_object_or_404(Imparte, id_pro=profesor, id_asig__nombre_asig=asignatura, grupo=grupo)
+
+    # Obtener los resultados promedio de los estudiantes para la asignatura y grupo
+    resultados = Evalua.objects.filter(
+        id_pro=imparte,
+        id_asig=imparte.id_asig,
+        grupo=grupo
+    ).values('id_est__nombre_est', 'id_est__id_est', 'fecha').annotate(promedio_nota=Avg('nota'))
+    
+    return render(request, 'consultar_resultados.html', {
+        'asignatura': asignatura,
+        'grupo': grupo,
+        'resultados': resultados,
+    })
+    
+@login_required
+def detalle_evaluacion(request, estudiante_id, asignatura, fecha, grupo):
+    # Obtener la asignatura
+    asignatura_obj = get_object_or_404(Asignatura, nombre_asig=asignatura)
+
+    # Convertir la fecha a un objeto datetime
+    try:
+        fecha_obj = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        return render(request, 'error.html', {'mensaje': 'Fecha inválida.'})
+
+    # Obtener las preguntas relacionadas a la evaluación
+    # preguntas = Pregunta.objects.filter(
+    #     evalua__id_asig=asignatura_obj,
+    #     evalua__id_est=estudiante_id,
+    #     evalua__grupo=grupo,
+    #     evalua__fecha=fecha_obj.date()
+    # ).distinct()
+    
+    preguntas = Pregunta.objects.annotate(fecha_truncada=TruncDate('evalua__fecha')).filter(
+                evalua__id_asig=asignatura_obj,
+                evalua__grupo=grupo,
+                fecha_truncada=fecha_obj,
+                evalua__id_est=estudiante_id
+            ).distinct()
+
+    # Obtener las respuestas del estudiante
+    # respuestas = Responde.objects.filter(
+    #     id_asig=asignatura_obj,
+    #     id_est=estudiante_id,
+    #     grupo=grupo,
+    #     fecha=fecha_obj.date()
+        
+    # )
+    respuestas = Responde.objects.annotate(fecha_truncada=TruncDate('fecha')).filter(
+                    id_pro__id_asig=asignatura_obj,
+                    id_est=estudiante_id,
+                    fecha_truncada=fecha_obj
+                ).values('id_pro', 'id_asig', 'grupo', 'id_est', 'fecha', 'id_preg', 'id_resp', )#.values_list('id_resp', 'id_preg')
+
+    # Relacionar las preguntas con sus respuestas y si fueron correctas
+    consolidado = []
+    for pregunta in preguntas:
+        respuesta = respuestas.filter(id_preg=pregunta).order_by('id_asig').first()
+       
+        if respuesta:
+            correcta = Corresponde.objects.filter(
+                id_preg=pregunta,
+                id_resp__id_resp=respuesta['id_resp'],
+                es_correcta=True
+            ).exists()
+        else:
+            correcta = False
+
+        consolidado.append({
+            'pregunta': pregunta.enunciado_preg,
+            'respuesta': Respuesta.objects.get(id_resp=respuesta['id_resp']).enunciado_resp if respuesta else 'Sin responder',
+            'correcta': 'Sí' if correcta else 'No'
+        })
+
+    # Obtener la nota final
+    # nota = Evalua.objects.filter(
+    #     id_asig=asignatura_obj,
+    #     id_est=estudiante_id,
+    #     grupo=grupo,
+    #     fecha=fecha_obj.date()
+    # ).values_list('nota', flat=True).first()
+    evaluacion = Evalua.objects.filter(
+            id_est__id_est=estudiante_id,
+            id_asig__id_asig=asignatura_obj.id_asig,
+            grupo=grupo,
+            fecha=fecha_obj) \
+        .values('nota') \
+        .annotate(num_estudiantes=Count('nota', distinct=True)) \
+        .order_by('nota').first()
+    nota = evaluacion['nota']
+
+    return render(request, 'detalle_evaluacion.html', {
+        'asignatura': asignatura,
+        'fecha': fecha,
+        'grupo': grupo,
+        'consolidado': consolidado,
+        'nota': nota,
+    })
