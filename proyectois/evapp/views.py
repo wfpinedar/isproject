@@ -54,12 +54,11 @@ def registro_estudiante(request):
 
 @login_required
 def redireccionar_despues_de_login(request):
-    if hasattr(request.user, 'estudiante'):
-        return redirect('home_estudiante')
-    elif hasattr(request.user, 'profesor'):
+    if hasattr(request.user, 'profesor'):
         return redirect('home_profesor')
-    else:
-        return redirect('home_generico')
+    elif hasattr(request.user, 'estudiante'):
+        return redirect('home_estudiante')
+    return redirect('login')
     
 @login_required
 def home_estudiante(request):
@@ -67,7 +66,11 @@ def home_estudiante(request):
 
 @login_required
 def home_profesor(request):
-    return render(request, 'home_profesor.html')
+    is_profesor = Profesor.objects.filter(user=request.user).exists()
+    context = {
+        'is_profesor': is_profesor,
+    }
+    return render(request, 'home_profesor.html', context)
 
 def home_generico(request):
     return render(request, 'home_generico.html')
@@ -113,8 +116,6 @@ def agregar_respuesta(request):
 def listar_respuestas(request):
     respuestas = Respuesta.objects.all().order_by('id_resp')
     return render(request, 'listar_respuestas.html', {'respuestas': respuestas})
-
-
 
 @login_required
 @solo_profesores

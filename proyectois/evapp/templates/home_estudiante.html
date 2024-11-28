@@ -1,6 +1,33 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Bienvenido Estudiante</h1>
-<p>Este es el panel para estudiantes.</p>
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12 text-center">
+            <h1 class="display-4">Bienvenido, Estudiante</h1>
+            <p class="lead">Este es el panel diseñado especialmente para facilitar la gestión de tus evaluaciones.</p>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <!-- Información principal -->
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white text-center">
+                    <h2>Funcionalidades del Panel</h2>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong>Consultar evaluaciones:</strong> Puedes consultar las evaluaciones que te han sido asignadas con su 
+                            fecha y hora de presentación.
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Consultar resultados:</strong> Puedes consultar los resultados de las evaluaciones presentadas.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

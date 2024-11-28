@@ -1,6 +1,51 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Bienvenido Profesor</h1>
-<p>Este es el panel para profesores.</p>
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12 text-center">
+            <h1 class="display-4">Bienvenido, Profesor</h1>
+            <p class="lead">Este es el panel diseñado especialmente para facilitar la gestión de tus evaluaciones.</p>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <!-- Información principal -->
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white text-center">
+                    <h2>Funcionalidades del Panel</h2>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong>Creación de preguntas y respuestas:</strong> Puedes crear preguntas con sus respectivas respuestas para las asignaturas 
+                            que impartes.
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Agregación de preguntas y respuestas:</strong> Puedes agregar preguntas con sus respectivas respuestas previamente creadas 
+                            por ti o por profesores que impartan tus asignaturas a tus evaluaciones.
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Diseño de evaluaciones:</strong> Combina tus preguntas y respuestas en evaluaciones personalizadas para tus estudiantes.
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Visualización de evaluaciones creadas:</strong> Observa y gestiona las evaluaciones que has creado previamente.
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Consultar resultados:</strong> Consulta los resultados de tus estudiantes en las evaluaciones asignadas.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Botón de Evaluaciones
+    <div class="row mt-4 text-center">
+        <div class="col-12">
+            <a href="{% url 'listar_evaluacion' %}" class="btn btn-success btn-lg">
+                Ir a Evaluaciones
+            </a>
+        </div>
+    </div>-->
+</div>
 {% endblock %}

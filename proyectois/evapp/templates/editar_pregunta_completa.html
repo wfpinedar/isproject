@@ -10,7 +10,7 @@
         {% csrf_token %}
         <input type="hidden" name="editar_pregunta" value="true">
         {{ form|crispy }}
-        <button type="submit" class="btn btn-primary mt-3">Guardar Cambios de la Pregunta</button>
+        <button type="submit" class="btn btn-success mt-3">Guardar Cambios de la Pregunta</button>
     </form>
 
     <!-- Tabla para gestionar las respuestas relacionadas -->
@@ -45,7 +45,7 @@
                 {% endfor %}
             </tbody>
         </table>
-        <button type="submit" class="btn btn-primary mt-3">Guardar Relaciones de Respuestas</button>
+        <button type="submit" class="btn btn-success mt-3">Guardar Relaciones de Respuestas</button>
     </form>
 </div>
 {% endblock %}

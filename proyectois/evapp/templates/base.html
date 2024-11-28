@@ -7,6 +7,8 @@
     <title>EvaluacionAPP</title>
 </head>
 <body>
+</head>
+<body>
     <!-- Header -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
@@ -16,18 +18,29 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    
                     {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'listar_evaluacion' %}">Evaluaciones</a>
-                        </li>
+                        <!-- Botones para Profesores -->
                         {% if is_profesor %}
+                        <!-- Botón de Evaluaciones -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'home_profesor' %}">Profesor</a>
+                            <a class="btn btn-success m-1" href="{% url 'listar_evaluacion' %}">Mis Evaluaciones</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-success m-1" href="{% url 'agregar_pregunta' %}">Agregar Pregunta</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-success m-1" href="{% url 'agregar_respuesta' %}">Agregar Respuesta</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-success m-1" href="{% url 'listar_preguntas' %}">Ver Preguntas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-success m-1" href="{% url 'agregar_evaluacion' %}">Agregar Evaluación</a>
                         </li>
                         {% elif is_estudiante %}
+                        <!-- Botón para Estudiantes -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'home_estudiante' %}">Estudiante</a>
+                            <a class="btn btn-success m-1" href="{% url 'listar_evaluaciones_estudiante' %}">Mis Evaluaciones</a>
                         </li>
                         {% endif %}
                     {% endif %}
@@ -44,7 +57,7 @@
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="btn btn-primary" href="{% url 'login' %}">Log In</a>
+                        <a class="btn btn-success" href="{% url 'login' %}">Log In</a>
                     </li>
                     {% endif %}
                 </ul>

@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'crispy_forms',
     'crispy_bootstrap5',
-    'evapp'
+    'evapp.apps.EvappConfig'
 ]
 
 MIDDLEWARE = [
@@ -66,10 +66,15 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'evapp.context_processors.es_profesor',
+                'evapp.context_processors.es_estudiante',
+
             ],
         },
     },
 ]
+
+
 
 WSGI_APPLICATION = 'proyectois.wsgi.application'
 
@@ -100,7 +105,9 @@ DATABASES = {
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 # AUTH_USER_MODEL = 'evapp.Usuario'
-LOGIN_REDIRECT_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/redireccionar/'
+LOGOUT_REDIRECT_URL = '/login/'  # Después de logout, lleva al login
+
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
