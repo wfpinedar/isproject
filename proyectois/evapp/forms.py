@@ -180,7 +180,7 @@ class ResponderEvaluacionForm(forms.Form):
                     queryset=respuestas,
                     widget=forms.RadioSelect,
                     label=pregunta.enunciado_preg,
-                    required=True
+                    required=False
                 )
             elif pregunta.tipo_preg == 'multiple':
                 self.fields[f'pregunta_{pregunta.id_preg}'] = forms.ModelMultipleChoiceField(
@@ -194,6 +194,6 @@ class ResponderEvaluacionForm(forms.Form):
                     queryset=respuestas,
                     widget=forms.RadioSelect,
                     label=pregunta.enunciado_preg,
-                    required=True
+                    required=False
                 )
     

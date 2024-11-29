@@ -11,7 +11,7 @@ from django.utils.timezone import now
 from collections import defaultdict
 from .forms import ProfesorForm, EstudianteForm, PreguntaForm, RespuestaForm, EvaluacionForm, ProgramarEvaluacionForm, ResponderEvaluacionForm
 from .models import (Pregunta, Respuesta, Corresponde, Asocia, Asignatura, Profesor, Estudiante, Evalua, Cursa, Imparte, Salon, 
-    Responde, Evaluacreate, Asociacreate)
+    Responde, Evaluacreate, Asociacreate, RespondeInsert)
 from .utils import solo_profesores, insertar_respuesta_manual
 
 
@@ -285,7 +285,7 @@ def programar_evaluacion(request):
                 .distinct()
             )
             form.fields['evaluacion'].choices = [
-                (f"{evaluacion['id_asig_id']}|{evaluacion['fecha']}", f"Evaluación - {evaluacion['fecha'].strftime('%Y-%m-%d')}")
+                (f"{evaluacion['id_asig_id']}|{evaluacion['fecha']}", f"Evaluación - {evaluacion['fecha'].strftime('%Y-%m-%d')} - {evaluacion['id_asig_id']}")
                 for evaluacion in evaluaciones
             ]
 
@@ -492,7 +492,19 @@ def responder_evaluacion(request, asignatura, grupo, fecha, tiempo_restante):
     if not imparte:
         return render(request, 'error.html', {'mensaje': 'No estás inscrito en esta asignatura y grupo.'})
 
-    preguntas = Pregunta.objects.filter(evalua__id_asig=asignatura_id, evalua__grupo=grupo, evalua__fecha=fecha, evalua__id_est=estudiante)
+    # preguntas = Pregunta.objects.filter(
+    #     evalua__id_asig=asignatura_id, 
+    #     evalua__grupo=grupo, 
+    #     evalua__fecha=fecha_obj, 
+    #     evalua__id_est=estudiante)
+    preguntas = Pregunta.objects.annotate(fecha_truncada=TruncDate('evalua__fecha')).filter(
+                evalua__id_asig=asignatura_id,
+                evalua__grupo=grupo,
+                fecha_truncada=fecha_obj,
+                evalua__id_est=estudiante
+            ).distinct()
+    # print(preguntas, "<------------------------------- 2!")
+    
     if request.method == 'POST':
         form = ResponderEvaluacionForm(request.POST, preguntas=preguntas)
         if form.is_valid():
@@ -501,46 +513,46 @@ def responder_evaluacion(request, asignatura, grupo, fecha, tiempo_restante):
                 try:
                     if pregunta.tipo_preg == 'unique':
                         respuesta = form.cleaned_data[field_name]
-                        Responde.objects.create(
-                            id_pro=imparte,
-                            id_asig_id=asignatura_id,
+                        RespondeInsert.objects.create(
+                            id_pro=imparte.id_pro_id,
+                            id_asig=asignatura_id,
                             grupo=grupo,
-                            id_est=estudiante,
+                            id_est=estudiante.id_est,
                             fecha=fecha_obj,
-                            id_preg=pregunta,
-                            id_resp=respuesta
+                            id_preg=pregunta.id_preg,
+                            id_resp=respuesta.id_resp
                         )
                     elif pregunta.tipo_preg == 'multiple':
                         respuestas = form.cleaned_data[field_name]
                         for respuesta in respuestas:
                             if not Responde.objects.filter(
                                 id_pro=imparte,
-                                id_asig_id=asignatura_id,
+                                id_asig=asignatura_id,
                                 grupo=grupo,
                                 id_est=estudiante,
                                 fecha=fecha_obj,
                                 id_preg=pregunta,
                                 id_resp=respuesta
                             ).exists():
-                                Responde.objects.create(
-                                    id_pro=imparte,
-                                    id_asig_id=asignatura_id,
+                                RespondeInsert.objects.create(
+                                    id_pro=imparte.id_pro_id,
+                                    id_asig=asignatura_id,
                                     grupo=grupo,
-                                    id_est=estudiante,
+                                    id_est=estudiante.id_est,
                                     fecha=fecha_obj,
-                                    id_preg=pregunta,
-                                    id_resp=respuesta
+                                    id_preg=pregunta.id_preg,
+                                    id_resp=respuesta.id_resp
                                 )
                     elif pregunta.tipo_preg == 'true_false':
                         respuesta_vf = form.cleaned_data[field_name]
-                        Responde.objects.create(
-                            id_pro=imparte,
-                            id_asig_id=asignatura_id,
+                        RespondeInsert.objects.create(
+                            id_pro=imparte.id_pro_id,
+                            id_asig=asignatura_id,
                             grupo=grupo,
-                            id_est=estudiante,
+                            id_est=estudiante.id_est,
                             fecha=fecha_obj,
-                            id_preg=pregunta,
-                            id_resp=respuesta_vf
+                            id_preg=pregunta.id_preg,
+                            id_resp=respuesta_vf.id_resp
                         )
                 except Exception as e:
                     # Llamar a la función de inserción manual en caso de error
@@ -577,7 +589,7 @@ def responder_evaluacion(request, asignatura, grupo, fecha, tiempo_restante):
                         id_est=estudiante.id_est,
                         fecha=fecha_obj,
                         id_preg=pregunta.id_preg,
-                        id_resp=respuesta_vf   .id_resp
+                        id_resp=respuesta_vf.id_resp
                     )
                     
                     # Calcular nota

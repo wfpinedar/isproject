@@ -289,3 +289,17 @@ class Responde(models.Model):
         managed = False
         db_table = 'responde'
         unique_together = (('id_pro', 'id_asig', 'grupo', 'id_est', 'fecha', 'id_preg', 'id_resp'),)
+        
+
+class RespondeInsert(models.Model):
+    id_pro = models.IntegerField(primary_key=False)
+    id_asig = models.IntegerField(primary_key=False)
+    grupo = models.CharField(max_length=50, primary_key=False)
+    id_est = models.IntegerField(primary_key=False)
+    fecha = models.DateTimeField(primary_key=False)
+    id_preg = models.IntegerField(primary_key=False)
+    id_resp = models.IntegerField(primary_key=False)
+
+    class Meta:
+        managed = False  # Django no gestionará esta tabla
+        db_table = 'responde'

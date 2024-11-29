@@ -22,7 +22,7 @@
                 temporizador.textContent = "Tiempo agotado.";
                 clearInterval(intervalo);
                 formulario.submit();
-                window.location.href = "{% url 'listar_evaluaciones_estudiante' %}";
+                //window.location.href = "{% url 'listar_evaluaciones_estudiante' %}";
             } else {
                 const horas = Math.floor(tiempoRestante / 3600);
                 const minutos = Math.floor((tiempoRestante % 3600) / 60);
