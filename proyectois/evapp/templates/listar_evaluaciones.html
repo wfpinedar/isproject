@@ -9,6 +9,7 @@
                 <th>Asignatura</th>
                 <th>Fecha y hora</th>
                 <th>Número de Preguntas</th>
+                <th>Resultados</th>
             </tr>
         </thead>
         <tbody>
@@ -17,6 +18,9 @@
                 <td>{{ evaluacion.asignatura }}</td>
                 <td>{{ evaluacion.fecha }}</td>
                 <td>{{ evaluacion.numero_preguntas }}</td>
+                <td>
+                    <a href="{% url 'consultar_resultados' asignatura=evaluacion.asignatura grupo=evaluacion.grupo fecha=evaluacion.fecha %}" class="btn btn-success">Ver Detalle</a>
+                </td>
             </tr>
             {% empty %}
             <tr>

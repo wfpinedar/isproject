@@ -27,5 +27,5 @@
 
 <p><strong>Nota Final:</strong> {{ nota }}</p>
 
-<a href="{% url 'consultar_resultados' asignatura=asignatura grupo=grupo %}">Volver</a>
+<a href="{{ previous_url }}">Volver</a>
 {% endblock %}

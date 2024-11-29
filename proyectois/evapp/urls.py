@@ -26,7 +26,8 @@ urlpatterns = [
     path('evaluaciones/programadas/', views.listar_evaluacion_programada, name='listar_evaluacion_programada'),
     path('evaluaciones/estudiante/', views.listar_evaluaciones_estudiante, name='listar_evaluaciones_estudiante'),
     path('evaluaciones/presentar/<str:asignatura>/<str:fecha>/<str:grupo>/',views.presentar_evaluacion,name='presentar_evaluacion'),
-    path('resultados/<str:asignatura>/<str:grupo>/', views.consultar_resultados, name='consultar_resultados'),
+    path('resultados/<str:asignatura>/<str:grupo>/<str:fecha>/', views.consultar_resultados, name='consultar_resultados'),
     path('detalle_evaluacion/<int:estudiante_id>/<str:asignatura>/<str:fecha>/<str:grupo>/', views.detalle_evaluacion, name='detalle_evaluacion'),
     path('evaluaciones/responder/<str:asignatura>/<str:fecha>/<str:grupo>/',views.responder_evaluacion,name='responder_evaluacion'),
+    path('evaluaciones/responder/<str:asignatura>/<str:fecha>/<str:grupo>/<int:tiempo_restante>',views.responder_evaluacion,name='responder_evaluacion'),
 ]

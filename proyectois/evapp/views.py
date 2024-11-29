@@ -236,15 +236,24 @@ def agregar_evaluacion(request):
 @login_required
 @solo_profesores
 def listar_evaluaciones(request):
+    profesor = request.user.profesor
     evaluaciones = Asocia.objects.values(
         'id_asig', 'fecha'
     ).annotate(numero_preguntas=Count('id_preg'))
-
+    
     evaluaciones_data = [
         {
             'asignatura': Asignatura.objects.get(id_asig=evaluacion['id_asig']).nombre_asig,
             'fecha': evaluacion['fecha'],
             'numero_preguntas': evaluacion['numero_preguntas'],
+            'grupo': (
+                        Imparte.objects.filter(
+                            id_pro=profesor.id_pro,
+                            id_asig=evaluacion['id_asig']
+                        )
+                        .values_list('grupo', flat=True)
+                        .first()
+                    )
         }
         for evaluacion in evaluaciones
     ]
@@ -402,6 +411,8 @@ def listar_evaluaciones_estudiante(request):
     return render(request, 'listar_evaluaciones_estudiante.html', {'evaluaciones': evaluaciones})
 
 from django.contrib import messages
+from django.utils.timezone import now
+from datetime import timedelta
 @login_required
 def presentar_evaluacion(request, asignatura, fecha, grupo):
     # Obtener la asignatura
@@ -411,18 +422,20 @@ def presentar_evaluacion(request, asignatura, fecha, grupo):
     estudiante = request.user.estudiante
 
     # Convertir la fecha a un objeto datetime
-    try:
-        fecha_obj = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
-    except ValueError:
-        messages.error(request, "Fecha inválida.")
-        return redirect('evaluaciones')  # Redirigir a una página de evaluaciones, si existe.
+    # try:
+    #     fecha_obj = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
+    # except ValueError:
+    #     messages.error(request, "Fecha inválida.")
+    #     return redirect('evaluaciones')  # Redirigir a una página de evaluaciones, si existe.
+    
+    fecha_obj = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
 
     # Verificar si el estudiante ya respondió alguna pregunta de esta evaluación
     evaluacion_respondida = Responde.objects.filter(
         id_asig=asignatura_obj,
         grupo=grupo,
         id_est=estudiante,
-        # fecha=fecha_obj.date()
+        fecha=fecha_obj
     ).exists()
 
     if evaluacion_respondida:
@@ -442,14 +455,32 @@ def presentar_evaluacion(request, asignatura, fecha, grupo):
             'grupo': grupo,
             'nota': nota
         })
-    else:
-        # Si no ha sido respondida, redirigir a la URL de responder_evaluacion
-        return redirect('responder_evaluacion', asignatura=asignatura, fecha=fecha, grupo=grupo)
+    # Validar rango de tiempo para presentación (fecha + 2 horas)
+    inicio = fecha_obj
+    fin = fecha_obj + timedelta(hours=2)
+    tiempo_actual = now().replace(tzinfo=None) - timedelta(hours=5)
+    
+    print(inicio, tiempo_actual, fin, "******************************************")
+    if not inicio <= tiempo_actual <= fin:
+        messages.error(request, "Esta evaluación solo puede presentarse en el horario permitido.")
+        return redirect('listar_evaluaciones_estudiante')
+
+    # Calcular tiempo restante en segundos para el temporizador
+    tiempo_restante = int((fin - tiempo_actual).total_seconds())
+    
+    # Si no ha sido respondida, redirigir a la URL de responder_evaluacion
+    return redirect('responder_evaluacion', asignatura=asignatura, fecha=fecha, grupo=grupo, tiempo_restante=tiempo_restante)
+    # return render(request, 'responder_evaluacion.html', {
+    #     'asignatura': asignatura,
+    #     'fecha': fecha,
+    #     'grupo': grupo,
+    #     'tiempo_restante': tiempo_restante
+    # })
     
 
 
 @login_required
-def responder_evaluacion(request, asignatura, grupo, fecha):
+def responder_evaluacion(request, asignatura, grupo, fecha, tiempo_restante):
     asignatura_id = Asignatura.objects.get(nombre_asig=asignatura).id_asig
     estudiante = request.user.estudiante
 
@@ -619,29 +650,31 @@ def responder_evaluacion(request, asignatura, grupo, fecha):
     else:
         form = ResponderEvaluacionForm(preguntas=preguntas)
 
-    return render(request, 'responder_evaluacion.html', {'form': form})
+    return render(request, 'responder_evaluacion.html', {'form': form, 'tiempo_restante':tiempo_restante})
 
 
 @login_required
 @solo_profesores
-def consultar_resultados(request, asignatura, grupo):
+def consultar_resultados(request, asignatura, grupo, fecha):
     # Obtener el profesor actual
     profesor = request.user.profesor
 
     # Validar que el profesor dicta esta asignatura en el grupo especificado
     imparte = get_object_or_404(Imparte, id_pro=profesor, id_asig__nombre_asig=asignatura, grupo=grupo)
-
+    fecha_obj = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
     # Obtener los resultados promedio de los estudiantes para la asignatura y grupo
     resultados = Evalua.objects.filter(
         id_pro=imparte,
         id_asig=imparte.id_asig,
-        grupo=grupo
+        grupo=grupo,
+        fecha=fecha_obj
     ).values('id_est__nombre_est', 'id_est__id_est', 'fecha').annotate(promedio_nota=Avg('nota'))
     
     return render(request, 'consultar_resultados.html', {
         'asignatura': asignatura,
         'grupo': grupo,
         'resultados': resultados,
+        'previous_url': request.META['HTTP_REFERER']
     })
     
 @login_required
@@ -727,4 +760,5 @@ def detalle_evaluacion(request, estudiante_id, asignatura, fecha, grupo):
         'grupo': grupo,
         'consolidado': consolidado,
         'nota': nota,
+        'previous_url': request.META['HTTP_REFERER']
     })

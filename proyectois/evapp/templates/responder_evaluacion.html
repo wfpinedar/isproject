@@ -4,10 +4,36 @@
 {% block content %}
 <div class="container mt-5">
     <h2>Responder Evaluación</h2>
-    <form method="post">
+    <p><strong>Tiempo restante:</strong> <span id="temporizador"></span></p>
+    <form id="evaluacionForm" method="post">
         {% csrf_token %}
         {{ form|crispy }}
         <button type="submit" class="btn btn-success">Enviar Respuestas</button>
     </form>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let tiempoRestante = parseInt({{ tiempo_restante|default:300 }}, 10);
+        const temporizador = document.getElementById('temporizador');
+        const formulario = document.getElementById('evaluacionForm');
+
+        const actualizarTemporizador = () => {
+            if (tiempoRestante <= 0) {
+                temporizador.textContent = "Tiempo agotado.";
+                clearInterval(intervalo);
+                formulario.submit();
+                window.location.href = "{% url 'listar_evaluaciones_estudiante' %}";
+            } else {
+                const horas = Math.floor(tiempoRestante / 3600);
+                const minutos = Math.floor((tiempoRestante % 3600) / 60);
+                const segundos = tiempoRestante % 60;
+                temporizador.textContent = `${horas}h ${minutos}m ${segundos}s`;
+                tiempoRestante--;
+            }
+        };
+    
+        const intervalo = setInterval(actualizarTemporizador, 1000);
+        actualizarTemporizador(); // Inicializa el temporizador
+    });
+</script>
 {% endblock %}

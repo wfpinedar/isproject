@@ -280,7 +280,7 @@ class Responde(models.Model):
     id_asig = models.ForeignKey(Asignatura, on_delete=models.CASCADE, db_column='id_asig')
     grupo = models.CharField(max_length=50)
     id_est = models.ForeignKey(Estudiante, on_delete=models.CASCADE, db_column='id_est')
-    fecha = models.DateField()
+    fecha = models.DateTimeField()
     id_preg = models.ForeignKey(Pregunta, on_delete=models.CASCADE, db_column='id_preg')
     id_resp = models.ForeignKey(Respuesta, on_delete=models.CASCADE, db_column='id_resp')
     
