@@ -10,7 +10,8 @@ from django.db.models.functions import TruncDate
 from django.utils.timezone import now
 from collections import defaultdict
 from .forms import ProfesorForm, EstudianteForm, PreguntaForm, RespuestaForm, EvaluacionForm, ProgramarEvaluacionForm, ResponderEvaluacionForm
-from .models import Pregunta, Respuesta, Corresponde, Asocia, Asignatura, Profesor, Estudiante, Evalua, Cursa, Imparte, Salon, Responde
+from .models import (Pregunta, Respuesta, Corresponde, Asocia, Asignatura, Profesor, Estudiante, Evalua, Cursa, Imparte, Salon, 
+    Responde, Evaluacreate, Asociacreate)
 from .utils import solo_profesores, insertar_respuesta_manual
 
 
@@ -224,7 +225,7 @@ def agregar_evaluacion(request):
             asignatura = form.cleaned_data['asignatura']
             fecha = form.cleaned_data['fecha']
             for pregunta in preguntas:
-                Asocia.objects.create(id_preg = pregunta, id_asig = asignatura, fecha = fecha)
+                Asociacreate.objects.create(id_preg = pregunta, id_asig = asignatura, fecha = fecha)
             return redirect(reverse('listar_evaluacion'))
                 
     else:
@@ -316,7 +317,7 @@ def programar_evaluacion(request):
                     ).exists():
                         # Crear solo si no existe
                         # try:
-                        Evalua.objects.create(
+                        Evaluacreate.objects.create(
                             id_pro=imparte,
                             id_asig=id_asig,
                             grupo=grupo,

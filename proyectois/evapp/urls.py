@@ -28,4 +28,5 @@ urlpatterns = [
     path('evaluaciones/presentar/<str:asignatura>/<str:fecha>/<str:grupo>/',views.presentar_evaluacion,name='presentar_evaluacion'),
     path('resultados/<str:asignatura>/<str:grupo>/', views.consultar_resultados, name='consultar_resultados'),
     path('detalle_evaluacion/<int:estudiante_id>/<str:asignatura>/<str:fecha>/<str:grupo>/', views.detalle_evaluacion, name='detalle_evaluacion'),
+    path('evaluaciones/responder/<str:asignatura>/<str:fecha>/<str:grupo>/',views.responder_evaluacion,name='responder_evaluacion'),
 ]

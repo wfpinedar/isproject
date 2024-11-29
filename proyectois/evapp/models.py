@@ -33,6 +33,15 @@ class Asocia(models.Model):
         db_table = 'asocia'
         unique_together = (('id_preg', 'id_asig', 'fecha'),)
 
+class Asociacreate(models.Model):
+    id_preg = models.ForeignKey('Pregunta', models.DO_NOTHING, db_column='id_preg', primary_key=True)  # The composite primary key (id_preg, id_asig, fecha) found, that is not supported. The first column is selected.
+    id_asig = models.ForeignKey(Asignatura, models.DO_NOTHING, db_column='id_asig')
+    fecha = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'asocia'
+        unique_together = (('id_preg', 'id_asig', 'fecha'),)
 
 class AuthGroup(models.Model):
     name = models.CharField(unique=True, max_length=150)
@@ -215,8 +224,23 @@ class Salon(models.Model):
         return str(self.id_salon)
 
 class Evalua(models.Model):
-    id_pro = models.ForeignKey(Imparte, on_delete=models.CASCADE, db_column='id_pro')
+    id_pro = models.ForeignKey(Imparte, on_delete=models.CASCADE, db_column='id_pro', primary_key=True)
     id_asig = models.ForeignKey(Asignatura, on_delete=models.CASCADE, db_column='id_asig')
+    grupo = models.CharField(max_length=50)
+    id_est = models.ForeignKey(Estudiante, models.CASCADE, db_column='id_est')
+    id_preg = models.ForeignKey(Pregunta, models.CASCADE, db_column='id_preg')
+    fecha = models.DateTimeField()
+    id_salon = models.ForeignKey(Salon, models.CASCADE, db_column='id_salon', blank=True, null=True)
+    nota = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'evalua'
+        unique_together = (('id_pro', 'id_asig', 'grupo', 'id_est', 'id_preg', 'fecha'),)
+
+class Evaluacreate(models.Model):
+    id_pro = models.ForeignKey(Imparte, on_delete=models.CASCADE, db_column='id_pro', primary_key=True)
+    id_asig = models.IntegerField()
     grupo = models.CharField(max_length=50)
     id_est = models.ForeignKey(Estudiante, models.CASCADE, db_column='id_est')
     id_preg = models.ForeignKey(Pregunta, models.CASCADE, db_column='id_preg')
